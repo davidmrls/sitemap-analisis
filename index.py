@@ -30,5 +30,14 @@ if sitemap_index_url:
     
     st_categorias = adviz.url_structure(sitemaps['loc'],domain='domain',items_per_level=20,height=700,title='Hola')
     st.plotly_chart(st_categorias, use_container_width=True)
-
+    total_urls = sitemaps['sitemap_cat'].value_counts().sum()
+    urls_por_sitemap = sitemaps['sitemap_cat'].value_counts()
+    porcentajes = (urls_por_sitemap / total_urls) * 100
+    df = pd.DataFrame({'urls_por_sitemap': urls_por_sitemap,'porcentaje': porcentajes,})
+    #Se establecen columnas de streamlit
+    col1, col2 = st.columns([1, 1])
+    col1.dataframe(df)
+    #Poner total_urls arriba
+    col2.write(total_urls)
+    
 
