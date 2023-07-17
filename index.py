@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import advertools as adv
+import adviz
+from urllib.parse import urlparse
 
 
 st.title('Revisor de sitemaps')
@@ -22,4 +24,11 @@ if sitemap_index_url:
         return df.to_csv().encode('utf-8')
     sitemap_csv = convert_df(sitemaps)
     st.download_button("Descargar CSV",sitemap_csv,(str(sitemap_index_url)+".csv"),"text/csv",key='download-csv')
+      # El usuario introduce una URL
+    #parsed_url = urlparse(sitemap_index_url)  # Analiza la URL
+    #domain = parsed_url.netloc  # Extrae el nombre de dominio
+    
+    st_categorias = adviz.url_structure(sitemaps['loc'],domain='domain',items_per_level=20,height=700,title='Hola')
+    st.plotly_chart(st_categorias, use_container_width=True)
+
 
