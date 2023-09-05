@@ -15,8 +15,8 @@ st.text(sitemap_index_url)
 if sitemap_index_url:
     sitemap_index = adv.sitemap_to_df(sitemap_index_url)
     sitemaps = (sitemap_index.assign(lastmod=lambda df: pd.to_datetime(df["lastmod"]),sitemap_cat=lambda df: df["sitemap"].str.split('/').str[3]).set_index("lastmod"))
-    #sitemaps['mcat'] = sitemaps['loc'].str.split('/').str[3]
-    #sitemaps['scat'] = sitemaps['loc'].str.split('/').str[4]
+    sitemaps['mcat'] = sitemaps['loc'].str.split('/').str[3]
+    sitemaps['scat'] = sitemaps['loc'].str.split('/').str[4]
     st.write = st.header('Datos del sitemap')
     st.dataframe(sitemaps)
     #Sección para descargar CSV +  botón ----------
@@ -37,22 +37,24 @@ if sitemap_index_url:
     
     total_urls = sitemaps['sitemap_cat'].value_counts().sum()
     urls_por_sitemap = sitemaps['sitemap_cat'].value_counts()
-    porcentajes = (urls_por_sitemap / total_urls) * 100
-    df = pd.DataFrame({'urls_por_sitemap': urls_por_sitemap,'porcentaje': porcentajes,})
+    porcentajes = ((urls_por_sitemap / total_urls) * 100).round(2)
+
+    df = pd.DataFrame({'Urls por sitemap': urls_por_sitemap,'Porcentaje (%)': porcentajes,})
     #Se establecen columnas de streamlit
     col1, col2 = st.columns([1, 1])
     col1.dataframe(df)
     #Poner total_urls arriba
     #col2.write(total_urls)
     col2.metric(label="Total de urls", value=total_urls)
-
+    categorias_principales = sitemaps['mcat'].value_counts(normalize=True) * 100
+    st.dataframe(categorias_principales)
 
     #Hasta aqui todo bien
 
 
     #Comprobamos el número de urls actualizadas en x tiempo
     urls_por_tiempo = sitemaps.resample('M')['loc'].count().to_frame()
-    #st.dataframe(urls_por_tiempo)
+    st.dataframe(urls_por_tiempo)
     pd.options.plotting.backend = "plotly"
     fig = urls_por_tiempo.plot(title="Urls por tiempo", template="plotly_dark",labels=dict(index="time", value="urls", variable="Sitemap"))
     st.plotly_chart(fig)
