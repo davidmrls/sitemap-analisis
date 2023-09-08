@@ -15,6 +15,8 @@ st.text(sitemap_index_url)
 if sitemap_index_url:
     sitemap_index = adv.sitemap_to_df(sitemap_index_url)
     sitemaps = (sitemap_index.assign(lastmod=lambda df: pd.to_datetime(df["lastmod"]),sitemap_cat=lambda df: df["sitemap"].str.split('/').str[3]).set_index("lastmod"))
+    #sitemaps['loc'] = ['URL_Faltante' if x is None else x for x in sitemaps['loc']]
+    sitemaps['loc'] = sitemaps['loc'].replace({None: 'URL_Faltante'})
     sitemaps['mcat'] = sitemaps['loc'].str.split('/').str[3]
     sitemaps['scat'] = sitemaps['loc'].str.split('/').str[4]
     st.write = st.header('Datos del sitemap')
@@ -39,19 +41,31 @@ if sitemap_index_url:
     urls_por_sitemap = sitemaps['sitemap_cat'].value_counts()
     porcentajes = ((urls_por_sitemap / total_urls) * 100).round(2)
 
-    df = pd.DataFrame({'Urls por sitemap': urls_por_sitemap,'Porcentaje (%)': porcentajes,})
+    df = pd.DataFrame({'Urls Sitemap': urls_por_sitemap,'Porcentaje(%)': porcentajes,})
+    # Calculamos el número de URLs con 'blog' en la columna 'mcat' usando sum()
+    urls_blog = (sitemaps['mcat'] == 'blog').sum()
+
+    # Si no hay ninguna URL con 'blog', establecemos la métrica a "Nada"
+    if urls_blog == 0:
+      urls_blog = "Nada"
+    else:
+        urls_blog = str(urls_blog)
+
     #Se establecen columnas de streamlit
     col1, col2 = st.columns([1, 1])
     col1.dataframe(df)
     #Poner total_urls arriba
     #col2.write(total_urls)
     col2.metric(label="Total de urls", value=total_urls)
-    categorias_principales = sitemaps['mcat'].value_counts(normalize=True) * 100
+    col2.metric(label="URLs de blog", value=urls_blog)
+  
+    categorias_principales = sitemaps['mcat'].value_counts(normalize=True).mul(100).round(2).reset_index()
+    #categorias_principales = sitemaps['mcat'].value_counts(normalize=True) * 100
+    categorias_principales.columns = ['Categorías', 'Porcentaje(%)']
     st.dataframe(categorias_principales)
 
     #Hasta aqui todo bien
-
-
+    
     #Comprobamos el número de urls actualizadas en x tiempo
     urls_por_tiempo = sitemaps.resample('M')['loc'].count().to_frame()
     st.dataframe(urls_por_tiempo)
@@ -63,4 +77,22 @@ if sitemap_index_url:
     #Creamos un dataframe con solo loc y datos de tiempo (Justo lo anterior)
     #fig = px.bar(urls_por_tiempo, x="loc", y="count", color="medal", title="Long-Form Input")
     #st.plotly_chart(fig)
+''''
+# Añade estilos CSS
+st.markdown("""
+    <style>
+        .stColumn > div:first-child { 
+            display: flex;
+            justify-content: center;
+        }
+        .css-1njjmvq {
+            background-color: #E19898;  /* Color de fondo del cuadro */
+            border-radius: 10px;        /* Bordes redondeados */
+            padding: 10px;              /* Espaciado interno */
+            margin-left: 10px;          /* Margen respecto a la columna anterior */
+        }
+    </style>
+""", unsafe_allow_html=True)
+'''
 
+#Se pueden añadir funcionalidades como filtrado del csv en el propio streamlit
