@@ -58,41 +58,57 @@ if sitemap_index_url:
     #col2.write(total_urls)
     col2.metric(label="Total de urls", value=total_urls)
     col2.metric(label="URLs de blog", value=urls_blog)
-  
+
+    st.subheader("Categorías Principales")
     categorias_principales = sitemaps['mcat'].value_counts(normalize=True).mul(100).round(2).reset_index()
     #categorias_principales = sitemaps['mcat'].value_counts(normalize=True) * 100
     categorias_principales.columns = ['Categorías', 'Porcentaje(%)']
     st.dataframe(categorias_principales)
 
+    #-------NUEVO----------
+
+    st.subheader("Análisis de Frecuencia de Actualización por Categoría")
+    # Obtener la lista de categorías
+    lista_categorias = categorias_principales['Categorías'].tolist()
+
+    # Crear un selector para el valor mcat
+    selected_mcat = st.selectbox('Selecciona una categoría para ver su frecuencia de actualización:', lista_categorias)
+
+    # Filtrar las URLs basándonos en el valor seleccionado en 'selected_mcat'
+    filtered_urls = sitemaps[sitemaps['mcat'] == selected_mcat]
+
+    # Mostrar la frecuencia de actualización de las URLs filtradas
+    urls_updated_frequency = filtered_urls.resample('M')['loc'].count()
+    urls_updated_frequency.columns = ['Frecuencia de Actualización']
+
+    col1.dataframe(urls_updated_frequency)
+
+    # Configurar el backend de plotting para Plotly
+    pd.options.plotting.backend = "plotly"
+
+    # Crear un gráfico basado en el método .plot()
+    fig1 = urls_updated_frequency.plot(title=f'Frecuencia de Actualización de {selected_mcat} durante el tiempo', template="plotly_dark", labels=dict(index="time", value="urls", variable=selected_mcat))
+
+    # Mostrar el gráfico en streamlit
+    col2.plotly_chart(fig1)
+
+    #------HASTA AQUI NUEVO----------
+
     #Hasta aqui todo bien
-    
+    st.subheader("URLs por Tiempo")
     #Comprobamos el número de urls actualizadas en x tiempo
     urls_por_tiempo = sitemaps.resample('M')['loc'].count().to_frame()
     st.dataframe(urls_por_tiempo)
     pd.options.plotting.backend = "plotly"
-    fig = urls_por_tiempo.plot(title="Urls por tiempo", template="plotly_dark",labels=dict(index="time", value="urls", variable="Sitemap"))
-    st.plotly_chart(fig)
+    fig2 = urls_por_tiempo.plot(title="Urls por tiempo", template="plotly_dark",labels=dict(index="time", value="urls", variable="Sitemap"))
+    st.plotly_chart(fig2)
 
 
     #Creamos un dataframe con solo loc y datos de tiempo (Justo lo anterior)
     #fig = px.bar(urls_por_tiempo, x="loc", y="count", color="medal", title="Long-Form Input")
     #st.plotly_chart(fig)
-''''
+
 # Añade estilos CSS
-st.markdown("""
-    <style>
-        .stColumn > div:first-child { 
-            display: flex;
-            justify-content: center;
-        }
-        .css-1njjmvq {
-            background-color: #E19898;  /* Color de fondo del cuadro */
-            border-radius: 10px;        /* Bordes redondeados */
-            padding: 10px;              /* Espaciado interno */
-            margin-left: 10px;          /* Margen respecto a la columna anterior */
-        }
-    </style>
-""", unsafe_allow_html=True)
-'''
+
 
 #Se pueden añadir funcionalidades como filtrado del csv en el propio streamlit
