@@ -41,7 +41,6 @@ if sitemap_index_url:
     urls_por_sitemap = sitemaps['sitemap_cat'].value_counts()
     porcentajes = ((urls_por_sitemap / total_urls) * 100).round(2)
 
-    df = pd.DataFrame({'Urls Sitemap': urls_por_sitemap,'Porcentaje(%)': porcentajes,})
     # Calculamos el número de URLs con 'blog' en la columna 'mcat' usando sum()
     urls_blog = (sitemaps['mcat'] == 'blog').sum()
 
@@ -53,21 +52,38 @@ if sitemap_index_url:
 
     #Se establecen columnas de streamlit
     col1, col2 = st.columns([1, 1])
-    col1.dataframe(df)
+    #col1.dataframe(df)
     #Poner total_urls arriba
     #col2.write(total_urls)
-    col2.metric(label="Total de urls", value=total_urls)
+    col1.metric(label="Total de urls", value=total_urls)
     col2.metric(label="URLs de blog", value=urls_blog)
 
-    st.subheader("Categorías Principales")
+    #Hasta aqui todo bien
+    st.subheader("Frecuencia de actualización urls")
+    #Comprobamos el número de urls actualizadas en x tiempo
+    urls_por_tiempo = sitemaps.resample('M')['loc'].count()
+    #st.dataframe(urls_por_tiempo)
+    expander = st.expander("Tabla frecuencia de actualización urls")
+    expander.dataframe(urls_por_tiempo)
+    pd.options.plotting.backend = "plotly"
+    fig2 = urls_por_tiempo.plot(template="plotly_dark",labels=dict(index="time", value="urls", variable="Sitemap"))
+    st.plotly_chart(fig2)
+
+    col2, col3 = st.columns([1,1])
+    col2.subheader('Urls por sitemap')
+    data_urls_sitemap = pd.DataFrame({'Urls Sitemap': urls_por_sitemap,'Porcentaje(%)': porcentajes,})
+    col2.dataframe(data_urls_sitemap)
+    #VA AQUI
+
+    col3.subheader("Categorías Principales")
     categorias_principales = sitemaps['mcat'].value_counts(normalize=True).mul(100).round(2).reset_index()
     #categorias_principales = sitemaps['mcat'].value_counts(normalize=True) * 100
     categorias_principales.columns = ['Categorías', 'Porcentaje(%)']
-    st.dataframe(categorias_principales)
+    col3.dataframe(categorias_principales)
 
     #-------NUEVO----------
-
-    st.subheader("Análisis de Frecuencia de Actualización por Categoría")
+    col4, col5 = st.columns([1, 1])
+    st.subheader("Análisis de frecuencia de actualización por categoría")
     # Obtener la lista de categorías
     lista_categorias = categorias_principales['Categorías'].tolist()
 
@@ -79,29 +95,23 @@ if sitemap_index_url:
 
     # Mostrar la frecuencia de actualización de las URLs filtradas
     urls_updated_frequency = filtered_urls.resample('M')['loc'].count()
-    urls_updated_frequency.columns = ['Frecuencia de Actualización']
+    urls_updated_frequency.columns = ['Frecuencia de actualización']
 
-    col1.dataframe(urls_updated_frequency)
+    expander = st.expander("Actualización de urls en la categoría seleccionada")
+    expander.dataframe(urls_updated_frequency)
 
     # Configurar el backend de plotting para Plotly
     pd.options.plotting.backend = "plotly"
 
     # Crear un gráfico basado en el método .plot()
-    fig1 = urls_updated_frequency.plot(title=f'Frecuencia de Actualización de {selected_mcat} durante el tiempo', template="plotly_dark", labels=dict(index="time", value="urls", variable=selected_mcat))
+    fig1 = urls_updated_frequency.plot(title=f'Frecuencia de actualización de {selected_mcat}', template="plotly_dark", labels=dict(index="time", value="urls", variable=selected_mcat))
 
     # Mostrar el gráfico en streamlit
-    col2.plotly_chart(fig1)
+    st.plotly_chart(fig1)
 
     #------HASTA AQUI NUEVO----------
 
-    #Hasta aqui todo bien
-    st.subheader("URLs por Tiempo")
-    #Comprobamos el número de urls actualizadas en x tiempo
-    urls_por_tiempo = sitemaps.resample('M')['loc'].count().to_frame()
-    st.dataframe(urls_por_tiempo)
-    pd.options.plotting.backend = "plotly"
-    fig2 = urls_por_tiempo.plot(title="Urls por tiempo", template="plotly_dark",labels=dict(index="time", value="urls", variable="Sitemap"))
-    st.plotly_chart(fig2)
+    #VA AQUI
 
 
     #Creamos un dataframe con solo loc y datos de tiempo (Justo lo anterior)
