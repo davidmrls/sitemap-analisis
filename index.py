@@ -19,14 +19,16 @@ if sitemap_index_url:
     sitemaps['loc'] = sitemaps['loc'].replace({None: 'URL_Faltante'})
     sitemaps['mcat'] = sitemaps['loc'].str.split('/').str[3]
     sitemaps['scat'] = sitemaps['loc'].str.split('/').str[4]
-    st.write = st.header('Datos del sitemap')
+    st.header('Datos del sitemap')
     st.dataframe(sitemaps)
     #Sección para descargar CSV +  botón ----------
-    @st.cache_data
-    def convert_df(df):
+    #@st.cache_data
+    #def convert_df(df):
     # IMPORTANT: Cach∫e the conversion to prevent computation on every rerun
-        return df.to_csv().encode('utf-8')
-    sitemap_csv = convert_df(sitemaps)
+        #return df.to_csv().encode('utf-8')
+    sitemaps_convert = sitemaps.to_csv().encode('utf-8')
+    #la siguiente línea podría eliminarse
+    sitemap_csv = sitemaps_convert
     st.download_button("Descargar CSV",sitemap_csv,(str(sitemap_index_url)+".csv"),"text/csv",key='download-csv')
     #-----------
 
@@ -69,36 +71,38 @@ if sitemap_index_url:
     fig2 = urls_por_tiempo.plot(template="plotly_dark",labels=dict(index="time", value="urls", variable="Sitemap"))
     st.plotly_chart(fig2)
 
-    col2, col3 = st.columns([1,1])
-    col2.subheader('Urls por sitemap')
+    col3, col4 = st.columns([1,1])
+    col3.subheader('Urls por sitemap')
     data_urls_sitemap = pd.DataFrame({'Urls Sitemap': urls_por_sitemap,'Porcentaje(%)': porcentajes,})
-    col2.dataframe(data_urls_sitemap)
+    col3.dataframe(data_urls_sitemap)
     #VA AQUI
 
-    col3.subheader("Categorías Principales")
+    col4.subheader("Categorías Principales")
     categorias_principales = sitemaps['mcat'].value_counts(normalize=True).mul(100).round(2).reset_index()
     #categorias_principales = sitemaps['mcat'].value_counts(normalize=True) * 100
     categorias_principales.columns = ['Categorías', 'Porcentaje(%)']
-    col3.dataframe(categorias_principales)
+    col4.dataframe(categorias_principales)
 
     #-------NUEVO----------
-    col4, col5 = st.columns([1, 1])
     st.subheader("Análisis de frecuencia de actualización por categoría")
     # Obtener la lista de categorías
     lista_categorias = categorias_principales['Categorías'].tolist()
 
     # Crear un selector para el valor mcat
     selected_mcat = st.selectbox('Selecciona una categoría para ver su frecuencia de actualización:', lista_categorias)
+    # Intentar obtener el valor anterior de selected_mcat, si no existe, usar el primer valor de lista_categorias
+    #selected_mcat = st.selectbox('Selecciona una categoría para ver su frecuencia de actualización:', lista_categorias, index=(0 if 'selected_mcat' not in st.session_state else lista_categorias.index(st.session_state.selected_mcat)))
+    #st.session_state.selected_mcat = selected_mcat
 
     # Filtrar las URLs basándonos en el valor seleccionado en 'selected_mcat'
     filtered_urls = sitemaps[sitemaps['mcat'] == selected_mcat]
-
+    
     # Mostrar la frecuencia de actualización de las URLs filtradas
     urls_updated_frequency = filtered_urls.resample('M')['loc'].count()
     urls_updated_frequency.columns = ['Frecuencia de actualización']
 
-    expander = st.expander("Actualización de urls en la categoría seleccionada")
-    expander.dataframe(urls_updated_frequency)
+    #expander = st.expander("Actualización de urls en la categoría seleccionada")
+    #expander.dataframe(urls_updated_frequency)
 
     # Configurar el backend de plotting para Plotly
     pd.options.plotting.backend = "plotly"
